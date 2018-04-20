@@ -29,31 +29,6 @@
                     ]
                 },
                 {
-                    "name": "findMyDoctor",
-                    "slots": [],
-                    "samples": [
-                        "I need a doctor ",
-                        "find me a doctor nearby",
-                        "find me a doctor",
-                        "find my doctor"
-                    ]
-                },
-                {
-                    "name": "feverHelpLine",
-                    "slots": [
-                        {
-                            "name": "temperature",
-                            "type": "AMAZON.NUMBER"
-                        }
-                    ],
-                    "samples": [
-                        "I have a fever of {temperature}",
-                        "I have a fever",
-                        "my baby has a fever of {temperature}",
-                        "My baby has a fever"
-                    ]
-                },
-                {
                     "name": "autoSignForPay",
                     "slots": [],
                     "samples": [
@@ -61,6 +36,53 @@
                         "I would like to sign up for an auto pay",
                         "I want to sign up for an auto pay",
                         "I would like to sign up for auto pay"
+                    ]
+                },
+                {
+                    "name": "captureName",
+                    "slots": [
+                        {
+                            "name": "name",
+                            "type": "AMAZON.US_FIRST_NAME"
+                        }
+                    ],
+                    "samples": [
+                        "{name}",
+                        "My name is {name}"
+                    ]
+                },
+                {
+                    "name": "capturePhoneNo",
+                    "slots": [
+                        {
+                            "name": "phoneNumber",
+                            "type": "AMAZON.PhoneNumber"
+                        }
+                    ],
+                    "samples": [
+                        "Phone Number {phoneNumber}",
+                        "Here goes my Phone Number {phoneNumber}",
+                        "My Phone Number is {phoneNumber}"
+                    ]
+                },
+                {
+                    "name": "noPhone",
+                    "slots": [],
+                    "samples": [
+                        "I don't have a cell",
+                        "I don't have a mobile",
+                        "I don't have a phone"
+                    ]
+                },
+                {
+                    "name": "Unhandled",
+                    "slots": [],
+                    "samples": [
+                        "Cream roles",
+                        "What a joke",
+                        "blah blah blah",
+                        "fasd basf",
+                        "a"
                     ]
                 }
             ],
