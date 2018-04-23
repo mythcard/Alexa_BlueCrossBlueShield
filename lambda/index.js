@@ -79,7 +79,9 @@ const handlers = {
     },
     'capturePhoneNo':function()
     {
-        this.emit(':tell','ok your phone number is so and so');
+        console.log("Phone number value: ", this.event.request.intent.slots);
+        var phNum = "ok your phone number is "+ this.event.request.intent.slots.phoneNumber.value;
+        this.emit(':tell',phNum);
     },
     'identifyUser': function() 
     {
@@ -153,7 +155,7 @@ const handlers = {
              
          
          
-         // if identify user successful, trigger respective intent functions based on session attr
+         // this is a hack to adjust the same header id in case of first time usage, needs to be changed when there are multiple ones for test
         if ((this.attributes.lookUp && this.attributes.lookUp.length !== 0)  && this.attributes.fromIntent  === "processHttpPost" &&  this.attributes.toIntent === "captureName" )
         {
             console.log("I am inside idetify user capture name section");
@@ -163,8 +165,10 @@ const handlers = {
 	        //this.attributes.toIntent = "getHi";
         
             console.log("I am at the end of identifyUser  capture name section");
-            this.emit(':ask',"Hello"+this.attributes.name+"  What can I do for you today?");
+            this.emit(':ask',"Hello "+this.attributes.name+", What can I do for you today?");
         }
+        
+        // a handle is required when name look up returns null and you might have to gracefully terminate 
          
          
         
@@ -196,6 +200,27 @@ const handlers = {
             
             // attribute userIdentified should become yes when we obtain a object properly upon get
             this.attributes.userIdentified = "yes";
+            
+            const tempVariable          =   this.attributes.fromIntent;
+            this.attributes.fromIntent  =   this.attributes.toIntent;
+	        this.attributes.toIntent    =   tempVariable;
+	    
+	        this.emit(this.attributes.toIntent);
+        });
+    },
+    'processHttpPut': function (options) {    // for now this seems unnecessary, but I am sure I will come banging your doors baby
+        
+        request.put(options, (error, response, body) => {
+            // let json = JSON.parse(body);
+            console.log('error:', error); // Print the error if one occurred
+            console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+            console.log('body:', body); // Print the body
+            
+            //store the response in the session based on url
+            if(options.url === "http://demo-api.vagmi.io/patients/5abd277bf200095fcb9b1f54"){
+                var body = JSON.parse(body);
+                this.attributes.lookUp[0].auto_pay = body.auto_pay;
+            }
             
             const tempVariable          =   this.attributes.fromIntent;
             this.attributes.fromIntent  =   this.attributes.toIntent;
@@ -255,11 +280,39 @@ const handlers = {
         this.emit(':responseReady');
     },
     'autoSignForPay': function () {
-        const speechOutput = "You are signed up, You are good to go...";
-
-        this.response.cardRenderer(SKILL_NAME, speechOutput);
-        this.response.speak(speechOutput);
-        this.emit(':responseReady');
+        console.log("Let us see if I fail here");
+        var autoPay = this.attributes.lookUp[0].auto_pay;
+        
+        var speechOutput = "";
+        if(autoPay === true){
+            speechOutput = "You are signed up, You are good to go...";
+            this.response.cardRenderer(SKILL_NAME, speechOutput);
+            this.response.speak(speechOutput);
+            this.emit(':responseReady');
+        }
+        else{
+             // Set the headers
+                var header1 = {
+                        'BCBS-API-DEVICEID'         :     'deviceid1',
+                        'BCBS-API-DEVICE-USERID'    :     'device_userid1'
+                }
+                
+                // Configure the request
+                var options = {
+                    url: 'http://demo-api.vagmi.io/patients/5abd277bf200095fcb9b1f54',
+                    method: 'PUT',
+                    headers: header1,
+                    qs : {
+                        'patient[auto_pay]' : true
+                    }
+                }
+                
+            this.attributes.fromIntent  =   'autoSignForPay';
+	        this.attributes.toIntent    =   'processHttpPut';    
+            this.emit(this.attributes.toIntent,options);    
+            
+        }
+        
     },
     'AMAZON.HelpIntent': function () {
         const speechOutput = HELP_MESSAGE;
