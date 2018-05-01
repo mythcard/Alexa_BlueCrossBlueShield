@@ -79,9 +79,13 @@ const handlers = {
     },
     'capturePhoneNo':function()
     {
-        console.log("Phone number value: ", this.event.request.intent.slots);
-        var phNum = "ok your phone number is "+ this.event.request.intent.slots.phoneNumber.value;
-        this.emit(':tell',phNum);
+       console.log("Phone number value: ", this.event.request.intent.slots);
+        
+       this.attributes.phNum        = this.event.request.intent.slots.phoneNumber.value;
+	   this.attributes.fromIntent   = "capturePhoneNo";
+	   this.attributes.toIntent     = "identifyUser";
+	
+	   this.emit(this.attributes.toIntent);
     },
     'identifyUser': function() 
     {
@@ -127,7 +131,34 @@ const handlers = {
             this.emit(this.attributes.toIntent, options);
          }
          
-         if((this.attributes.lookUp && this.attributes.lookUp.length === 0)  && this.attributes.fromIntent  === "captureName" &&  this.attributes.toIntent === "identifyUser"){
+         if((this.attributes.lookUp && this.attributes.lookUp.length === 0)  && this.attributes.fromIntent  === "capturePhoneNo" &&  this.attributes.toIntent === "identifyUser"){
+                 // Set the headers
+                var header1 = {
+                        'BCBS-API-DEVICEID'         :     'deviceid1',
+                        'BCBS-API-DEVICE-USERID'    :     'device_userid1'
+                }
+                
+                // Configure the request
+                options = {
+                    url: 'http://demo-api.vagmi.io/patients/lookup',
+                    method: 'POST',
+                    headers: header1,
+                    qs : {
+                        name : this.attributes.phNum
+                    }
+                }
+                
+                this.attributes.fromIntent = "capturePhoneNo";
+                this.attributes.toIntent = "processHttpPost";
+                
+                console.log("Options at phnum: ",options);
+         
+                this.emit(this.attributes.toIntent, options);
+            }
+            
+            
+            //for phone capture identification
+            if((this.attributes.lookUp && this.attributes.lookUp.length === 0)  && this.attributes.fromIntent  === "captureName" &&  this.attributes.toIntent === "identifyUser"){
                  // Set the headers
                 var header1 = {
                         'BCBS-API-DEVICEID'         :     'deviceid1',
@@ -156,6 +187,8 @@ const handlers = {
          
          
          // this is a hack to adjust the same header id in case of first time usage, needs to be changed when there are multiple ones for test
+         // because device id and device user id  right now returns something whatso ever, to simulate null response I am following this startegy where 
+         // two device ids are used one dummy and other that is present in the DB, similar mechanism shall be done for phone too
         if ((this.attributes.lookUp && this.attributes.lookUp.length !== 0)  && this.attributes.fromIntent  === "processHttpPost" &&  this.attributes.toIntent === "captureName" )
         {
             console.log("I am inside idetify user capture name section");
@@ -166,6 +199,15 @@ const handlers = {
         
             console.log("I am at the end of identifyUser  capture name section");
             this.emit(':ask',"Hello "+this.attributes.name+", What can I do for you today?");
+        }
+        
+        if ((this.attributes.lookUp && this.attributes.lookUp.length !== 0)  && this.attributes.fromIntent  === "processHttpPost" &&  this.attributes.toIntent === "capturePhoneNo" )
+        {
+            console.log("I am inside idetify user capture phnum section", this.attributes.lookUp.length );
+        
+            console.log("I am at the end of identifyUser  capture name section", this.attributes.lookUp);
+            
+            this.emit(':ask',"Hello there! What can I do for you today?");
         }
         
         // a handle is required when name look up returns null and you might have to gracefully terminate 
@@ -253,6 +295,12 @@ const handlers = {
                 
                 this.emit("identifyUser");
             }
+            else if (this.attributes.fromIntent === "capturePhoneNo"){
+                this.attributes.fromIntent    =   "processHttpPost";
+                this.attributes.toIntent    =   "capturePhoneNo";
+                
+                this.emit("identifyUser");
+            }
             else{
             
             const tempVariable          =   this.attributes.fromIntent;
@@ -272,12 +320,12 @@ const handlers = {
         speechOutput += name + ", ";
         
         var copay = this.attributes.lookUp[0].plans[0].co_pay;  // for plans you need iteration to respective plan from plan id in the begining, or in other words the index is determined by the plan id
-        speechOutput += " Your co pay is: $"+ copay;
+        speechOutput += " Your co pay is: $"+ copay + ". ";
+        
+        speechOutput += " Is there anything else, you want me to do today?"
         console.log("Plans: ", this.attributes.lookUp[0]);
-
-        this.response.cardRenderer(SKILL_NAME, speechOutput);
-        this.response.speak(speechOutput);
-        this.emit(':responseReady');
+        
+        this.emit(':ask',speechOutput);
     },
     'autoSignForPay': function () {
         console.log("Let us see if I fail here");
@@ -314,6 +362,50 @@ const handlers = {
         }
         
     },
+    'findDoctor':function() {
+        
+        var message = "";
+        
+        var filledSlots = delegateSlotCollection.call(this);
+        
+        var specialistValue = this.event.request.intent.slots.specialist.value;
+        
+        if(specialistValue){
+            this.event.request.dialogState = "COMPLETED";
+        }
+        
+        console.log("Specialist value: ", specialistValue);
+        console.log("Doctor slot value: ", this.event.request.intent.slots);
+        
+        message += "There are 3 results for the speciality, "+specialistValue+". A link for these results has been emailed to you.";
+        
+        this.emit(':tell',message);
+    },
+    'toothache':function() {
+        
+        var message = "";
+        
+        var filledSlots = delegateSlotCollection.call(this);
+        
+        var age = this.event.request.intent.slots.age.value;
+        
+        if(age < 4 && age > 0){
+            this.event.request.dialogState = "COMPLETED";
+            message = "Sorry to hear about the toothache. I am glad you are here. My best guess is that it is because of teething. I would recommend to give 1 teaspoon of Infant ibuprofen. I believe teething rings in these circumstances helps alleviate the pain. I know I don't have to tell you this, but seeing a dentist is best recommended. "
+        }
+        else if(age > 4 && age < 100){
+            this.event.request.dialogState = "COMPLETED";
+            message = "Sorry to hear about the toothache. I am glad you are here. I recommend a dosage of Paracetamol for pain relief. I know I don't have to tell you but seeing a doctor is best recommended. " 
+        }        
+        else{
+            this.emit('AMAZON.StopIntent');
+        }
+        
+        message += " Is there anything else I can do for you today?";
+
+        
+        this.emit(':ask',message);
+    },
     'AMAZON.HelpIntent': function () {
         const speechOutput = HELP_MESSAGE;
         const reprompt = HELP_REPROMPT;
@@ -327,6 +419,10 @@ const handlers = {
     },
     'AMAZON.StopIntent': function () {
         this.response.speak(STOP_MESSAGE);
+        this.emit(':responseReady');
+    },
+    'AMAZON.NoIntent': function () {
+        this.response.speak('Take care! ' + STOP_MESSAGE);
         this.emit(':responseReady');
     },
     'Unhandled': function () { 
@@ -344,3 +440,34 @@ exports.handler = function (event, context, callback) {
     alexa.registerHandlers(handlers);
     alexa.execute();
 };
+
+
+
+/*========================================================================================
+ 2. Helper Function for getting the requiired fields for an intent 
+(example for findMyDoctor, speciality is a necessary field)
+========================================================================================*/
+
+function delegateSlotCollection(){
+  console.log("in delegateSlotCollection");
+  console.log("current dialogState: "+this.event.request.dialogState);
+  
+    if (this.event.request.dialogState === "STARTED") {
+      console.log("in Beginning");
+      var updatedIntent=this.event.request.intent;
+      //optionally pre-fill slots: update the intent object with slot values for which
+      //you have defaults, then return Dialog.Delegate with this updated intent
+      // in the updatedIntent property
+      this.emit(":delegate", updatedIntent);
+    } else if (this.event.request.dialogState !== "COMPLETED") {
+      console.log("in not completed");
+      // return a Dialog.Delegate directive with no updatedIntent property.
+      this.emit(":delegate");
+    } else {
+      console.log("in completed");
+      console.log("returning: "+ JSON.stringify(this.event.request.intent));
+      // Dialog is now complete and all required slots should be filled,
+      // so call your normal intent handler.
+      return this.event.request.intent;
+    }
+}
