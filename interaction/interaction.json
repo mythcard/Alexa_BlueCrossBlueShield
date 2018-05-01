@@ -19,6 +19,8 @@
                     "name": "getCoPay",
                     "slots": [],
                     "samples": [
+                        "Will you please tell what is my co pay",
+                        "May I know what is my co pay",
                         "Will you be able to tell what would be my co pay",
                         "Will you be able to tell what is my co pay",
                         "What is the co pay am I looking at",
@@ -69,6 +71,7 @@
                     "name": "noPhone",
                     "slots": [],
                     "samples": [
+                        "I don't have one",
                         "I don't have a cell",
                         "I don't have a mobile",
                         "I don't have a phone"
@@ -84,9 +87,151 @@
                         "fasd basf",
                         "a"
                     ]
+                },
+                {
+                    "name": "findDoctor",
+                    "slots": [
+                        {
+                            "name": "specialist",
+                            "type": "Speciality",
+                            "samples": [
+                                "Anesthesia",
+                                "ENT",
+                                "Dentist"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "find me a {specialist}",
+                        "find a doctor",
+                        "I am in search of {specialist}",
+                        "I am in search of a doctor",
+                        "I am looking for a doctor",
+                        "I need to find a doctor",
+                        "Help me find a doctor",
+                        "Please find me a doctor",
+                        "Find me a doctor"
+                    ]
+                },
+                {
+                    "name": "toothache",
+                    "slots": [
+                        {
+                            "name": "age",
+                            "type": "AMAZON.NUMBER",
+                            "samples": [
+                                "{age}",
+                                "Age is {age}"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "My baby has a toothache",
+                        "My kid has a toothache",
+                        "I have a toothache"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NoIntent",
+                    "samples": []
                 }
             ],
-            "types": []
-        }
+            "types": [
+                {
+                    "name": "Speciality",
+                    "values": [
+                        {
+                            "id": "1",
+                            "name": {
+                                "value": "ENT",
+                                "synonyms": [
+                                    "general"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "2",
+                            "name": {
+                                "value": "Dentist",
+                                "synonyms": [
+                                    "tooth doctor"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "3",
+                            "name": {
+                                "value": "Anesthesia"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "findDoctor",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "specialist",
+                            "type": "Speciality",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.354598311640.1422431387726"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "toothache",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "age",
+                            "type": "AMAZON.NUMBER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.1465086139369.1395526232962"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.354598311640.1422431387726",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What speciality?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Intent.1183549499794",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What speciality?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.1465086139369.1395526232962",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "May I know the age?"
+                    }
+                ]
+            }
+        ]
     }
 }
